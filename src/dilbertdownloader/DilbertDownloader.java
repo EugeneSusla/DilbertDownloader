@@ -6,23 +6,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Calendar;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 /**
  * 
  * @author Eugene Susla
  */
-// TODO use a propper logger
 public class DilbertDownloader {
 
-	
+	private static final ResourceBundle config = ResourceBundle
+			.getBundle("dilbertdownloader.config");
 
-	
-
-	private static final ResourceBundle config = ResourceBundle.getBundle("dilbertdownloader.config");
-	
-	private static final String beginSequence = config.getString("beginSequence");
+	private static final String beginSequence = config
+			.getString("beginSequence");
 	private static final String endSequence = config.getString("endSequence");
 	private static final String targetFolder = config.getString("targetFolder");
 	private static final String baseUrl = config.getString("baseUrl");
@@ -38,12 +34,14 @@ public class DilbertDownloader {
 		InputStreamReader converter = new InputStreamReader(System.in);
 		BufferedReader in = new BufferedReader(converter);
 
-		System.out.println("\nDownloading lastest comics:");
+		Logger.getLogger(DilbertDownloader.class.getName()).info(
+				"Downloading lastest comics:");
 		downloadLastest();
 
 		Thread thread = new Thread(new Runnable() {
 			public void run() {
-				System.out.println("\nDownloading comics:");
+				Logger.getLogger(DilbertDownloader.class.getName()).info(
+						"Downloading comics:");
 				Calendar counter = findFirstPresentComic();
 				int comicsDownloaded = 0;
 				while (!Thread.interrupted()) {
@@ -51,8 +49,9 @@ public class DilbertDownloader {
 					counter.add(Calendar.DAY_OF_MONTH, -1);
 					comicsDownloaded++;
 				}
-				System.out.println("Finished downloading. Comics downloaded: "
-						+ comicsDownloaded);
+				Logger.getLogger(DilbertDownloader.class.getName()).info(
+						"Finished downloading. Comics downloaded: "
+								+ comicsDownloaded);
 			}
 		});
 		thread.start();
@@ -61,11 +60,11 @@ public class DilbertDownloader {
 			try {
 				input = in.readLine();
 			} catch (IOException ex) {
-				Logger.getLogger(DilbertDownloader.class.getName()).log(
-						Level.SEVERE, null, ex);
+				Logger.getLogger(DilbertDownloader.class.getName()).error(null,
+						ex);
 			}
 		}
-		//FIXME exiting mechanism broken
+		// FIXME exiting mechanism broken
 		thread.interrupt();
 	}
 
@@ -78,8 +77,8 @@ public class DilbertDownloader {
 	private static String getURL(String date) {
 		String html;
 		try {
-			html = util.net.Http.getResponsePart(baseUrl
-					+ date + "/", beginSequence, endSequence);
+			html = util.net.Http.getResponsePart(baseUrl + date + "/",
+					beginSequence, endSequence);
 		} catch (IOException ex) {
 			return null;
 		}
@@ -90,8 +89,7 @@ public class DilbertDownloader {
 				+ beginSequence.indexOf('/');
 		int endIndex = html.indexOf(endSequence, beginIndex)
 				+ endSequence.indexOf('\"');
-		String result = domainUrl
-				+ html.substring(beginIndex, endIndex);
+		String result = domainUrl + html.substring(beginIndex, endIndex);
 		return result;
 	}
 
@@ -104,7 +102,8 @@ public class DilbertDownloader {
 	private static boolean isComicForDateDownloaded(String date) {
 		String file = targetFolder + "\\" + date.substring(0, 4) + "\\" + date
 				+ ".gif";
-		//TODO Investigate for a better way to check if a file exists w/o creating a new object
+		// TODO Investigate for a better way to check if a file exists w/o
+		// creating a new object
 		return new File(file).exists();
 	}
 
@@ -117,27 +116,29 @@ public class DilbertDownloader {
 		String year = date.substring(0, 4);
 		String folderName = targetFolder + "\\" + year;
 		String fileName = folderName + "\\" + date + ".gif";
-		//TODO Investigate for a better way to check if a file exists w/o creating a new object
+		// TODO Investigate for a better way to check if a file exists w/o
+		// creating a new object
 		if (checkForAlreadyDownloaded && (new File(fileName)).exists()) {
 			return false;
 		}
 		String url = getURL(date);
 		if (url == null) {
-			System.out.println("There seems to be no comic for date " + date);
+			Logger.getLogger(DilbertDownloader.class.getName()).warn(
+					"There seems to be no comic for date " + date);
 			return false;
 		}
-		Logger.getLogger(DilbertDownloader.class.getName()).info("Download url: " + url);
+		Logger.getLogger(DilbertDownloader.class.getName()).debug(
+				"Download url: " + url);
 		try {
 			(new File(folderName)).mkdir();
 			util.net.Http.writeResponseToFile(url, fileName);
 			if (verbose)
-				System.out.println("Comic downloaded for date: " + date);
+				Logger.getLogger(DilbertDownloader.class.getName()).info(
+						"Comic downloaded for date: " + date);
 			return true;
 		} catch (IOException ex) {
-			System.out.println("Error downloading comic for date " + date
-					+ " : " + ex);
-			//TODO use a proper logger
-			ex.printStackTrace();
+			Logger.getLogger(DilbertDownloader.class.getName()).error(
+					"Error downloading comic for date " + date + " : ", ex);
 			return false;
 		}
 	}
