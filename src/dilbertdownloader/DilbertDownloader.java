@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Calendar;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,10 +16,17 @@ import java.util.logging.Logger;
 // TODO use a propper logger
 public class DilbertDownloader {
 
-	// TODO use external properties file for config
-	private static final String beginSequence = "src=\"/dyn/str_strip/";
-	private static final String endSequence = ".gif\"";
-	private static final String targetFolder = "D:\\pics\\fun\\Dilbert";
+	
+
+	
+
+	private static final ResourceBundle config = ResourceBundle.getBundle("dilbertdownloader.config");
+	
+	private static final String beginSequence = config.getString("beginSequence");
+	private static final String endSequence = config.getString("endSequence");
+	private static final String targetFolder = config.getString("targetFolder");
+	private static final String baseUrl = config.getString("baseUrl");
+	private static final String domainUrl = config.getString("domainUrl");
 
 	private static volatile String input = "";
 
@@ -70,18 +78,19 @@ public class DilbertDownloader {
 	private static String getURL(String date) {
 		String html;
 		try {
-			// TODO use external properties file for config
-			html = util.net.Http.getResponsePart("http://dilbert.com/strips/"
+			html = util.net.Http.getResponsePart(baseUrl
 					+ date + "/", beginSequence, endSequence);
 		} catch (IOException ex) {
+			return null;
+		}
+		if (html.isEmpty()) {
 			return null;
 		}
 		int beginIndex = html.indexOf(beginSequence)
 				+ beginSequence.indexOf('/');
 		int endIndex = html.indexOf(endSequence, beginIndex)
 				+ endSequence.indexOf('\"');
-		// TODO use external properties file for config
-		String result = "http://dilbert.com"
+		String result = domainUrl
 				+ html.substring(beginIndex, endIndex);
 		return result;
 	}
@@ -108,19 +117,27 @@ public class DilbertDownloader {
 		String year = date.substring(0, 4);
 		String folderName = targetFolder + "\\" + year;
 		String fileName = folderName + "\\" + date + ".gif";
+		//TODO Investigate for a better way to check if a file exists w/o creating a new object
 		if (checkForAlreadyDownloaded && (new File(fileName)).exists()) {
 			return false;
 		}
 		String url = getURL(date);
+		if (url == null) {
+			System.out.println("There seems to be no comic for date " + date);
+			return false;
+		}
+		Logger.getLogger(DilbertDownloader.class.getName()).info("Download url: " + url);
 		try {
 			(new File(folderName)).mkdir();
 			util.net.Http.writeResponseToFile(url, fileName);
 			if (verbose)
 				System.out.println("Comic downloaded for date: " + date);
 			return true;
-		} catch (Exception ex) {
+		} catch (IOException ex) {
 			System.out.println("Error downloading comic for date " + date
 					+ " : " + ex);
+			//TODO use a proper logger
+			ex.printStackTrace();
 			return false;
 		}
 	}
