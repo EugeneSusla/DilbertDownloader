@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +31,6 @@ public class DilbertDownloader {
         downloadLastest();
         
         Thread thread = new Thread(new Runnable() {
-            @Override
             public void run() {
                 System.out.println("\nDownloading comics:");
                 Calendar counter = findFirstPresentComic();
