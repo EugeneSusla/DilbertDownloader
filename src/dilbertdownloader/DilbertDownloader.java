@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.ResourceBundle;
 import org.apache.log4j.Logger;
@@ -14,15 +16,22 @@ import org.apache.log4j.Logger;
  */
 public class DilbertDownloader {
 
-	private static final ResourceBundle config = ResourceBundle
+	private static final Logger LOGGER = Logger
+			.getLogger(DilbertDownloader.class.getName());
+
+	private static final ResourceBundle CONFIG = ResourceBundle
 			.getBundle("dilbertdownloader.config");
 
-	private static final String beginSequence = config
+	private static final String beginSequence = CONFIG
 			.getString("beginSequence");
-	private static final String endSequence = config.getString("endSequence");
-	private static final String targetFolder = config.getString("targetFolder");
-	private static final String baseUrl = config.getString("baseUrl");
-	private static final String domainUrl = config.getString("domainUrl");
+	private static final String endSequence = CONFIG.getString("endSequence");
+	private static final String targetFolder = CONFIG.getString("targetFolder");
+	private static final String baseUrl = CONFIG.getString("baseUrl");
+	private static final String domainUrl = CONFIG.getString("domainUrl");
+	private static final DateFormat dateToFileFormat = new SimpleDateFormat(
+			CONFIG.getString("fileNameFormat"));
+	private static final DateFormat dateFormat = new SimpleDateFormat(
+			CONFIG.getString("urlDateFormat"));
 
 	private static volatile String input = "";
 
@@ -34,14 +43,12 @@ public class DilbertDownloader {
 		InputStreamReader converter = new InputStreamReader(System.in);
 		BufferedReader in = new BufferedReader(converter);
 
-		Logger.getLogger(DilbertDownloader.class.getName()).info(
-				"Downloading lastest comics:");
+		LOGGER.info("Downloading lastest comics:");
 		downloadLastest();
 
 		Thread thread = new Thread(new Runnable() {
 			public void run() {
-				Logger.getLogger(DilbertDownloader.class.getName()).info(
-						"Downloading comics:");
+				LOGGER.info("Downloading comics:");
 				Calendar counter = findFirstPresentComic();
 				int comicsDownloaded = 0;
 				while (!Thread.interrupted()) {
@@ -49,9 +56,8 @@ public class DilbertDownloader {
 					counter.add(Calendar.DAY_OF_MONTH, -1);
 					comicsDownloaded++;
 				}
-				Logger.getLogger(DilbertDownloader.class.getName()).info(
-						"Finished downloading. Comics downloaded: "
-								+ comicsDownloaded);
+				LOGGER.info("Finished downloading. Comics downloaded: "
+						+ comicsDownloaded);
 			}
 		});
 		thread.start();
@@ -60,24 +66,17 @@ public class DilbertDownloader {
 			try {
 				input = in.readLine();
 			} catch (IOException ex) {
-				Logger.getLogger(DilbertDownloader.class.getName()).error(null,
-						ex);
+				LOGGER.error(null, ex);
 			}
 		}
-		// FIXME exiting mechanism broken
 		thread.interrupt();
 	}
 
-	/**
-	 * 
-	 * @param date
-	 *            yyyy-mm-dd
-	 * @return URL to png
-	 */
-	private static String getURL(String date) {
+	private static String getURL(Calendar date) {
 		String html;
 		try {
-			html = util.net.Http.getResponsePart(baseUrl + date + "/",
+			html = util.net.Http.getResponsePart(
+					baseUrl + dateFormat.format(date.getTime()) + "/",
 					beginSequence, endSequence);
 		} catch (IOException ex) {
 			return null;
@@ -93,68 +92,40 @@ public class DilbertDownloader {
 		return result;
 	}
 
-	/**
-	 * 
-	 * @param date
-	 *            yyyy-mm-dd
-	 * @return
-	 */
-	private static boolean isComicForDateDownloaded(String date) {
-		String file = targetFolder + "\\" + date.substring(0, 4) + "\\" + date
-				+ ".gif";
-		// TODO Investigate for a better way to check if a file exists w/o
-		// creating a new object
-		return new File(file).exists();
-	}
-
 	private static boolean isComicForDateDownloaded(Calendar date) {
-		return isComicForDateDownloaded(calendarToString(date));
+		String file = targetFolder + dateToFileFormat.format(date.getTime()) + ".gif";
+		LOGGER.debug("Looking for file " + file);
+		return new File(file).exists();
+
 	}
 
-	private static boolean downloadComic(String date,
+	private static boolean downloadComic(Calendar date,
 			boolean checkForAlreadyDownloaded, boolean verbose) {
-		String year = date.substring(0, 4);
-		String folderName = targetFolder + "\\" + year;
-		String fileName = folderName + "\\" + date + ".gif";
-		// TODO Investigate for a better way to check if a file exists w/o
-		// creating a new object
+		String fileName = targetFolder
+				+ dateToFileFormat.format(date.getTime()) + ".gif";
 		if (checkForAlreadyDownloaded && (new File(fileName)).exists()) {
 			return false;
 		}
 		String url = getURL(date);
 		if (url == null) {
-			Logger.getLogger(DilbertDownloader.class.getName()).warn(
-					"There seems to be no comic for date " + date);
+			LOGGER.warn("There seems to be no comic for date "
+					+ dateFormat.format(date.getTime()));
 			return false;
 		}
-		Logger.getLogger(DilbertDownloader.class.getName()).debug(
-				"Download url: " + url);
+		LOGGER.debug("Download url: " + url);
 		try {
-			(new File(folderName)).mkdir();
+			new File(fileName).getParentFile().mkdirs();
 			util.net.Http.writeResponseToFile(url, fileName);
 			if (verbose)
-				Logger.getLogger(DilbertDownloader.class.getName()).info(
-						"Comic downloaded for date: " + date);
+				LOGGER.info("Comic downloaded for date: "
+						+ dateFormat.format(date.getTime()));
 			return true;
 		} catch (IOException ex) {
-			Logger.getLogger(DilbertDownloader.class.getName()).error(
-					"Error downloading comic for date " + date + " : ", ex);
+			LOGGER.error(
+					"Error downloading comic for date "
+							+ dateFormat.format(date.getTime()) + " : ", ex);
 			return false;
 		}
-	}
-
-	private static boolean downloadComic(Calendar date,
-			boolean checkForAlreadyDownloaded, boolean verbose) {
-		return downloadComic(calendarToString(date), checkForAlreadyDownloaded,
-				verbose);
-	}
-
-	// TODO Investigate if there is a better way to output calendar
-	private static String calendarToString(Calendar cal) {
-		String result = "" + cal.get(Calendar.YEAR) + "-"
-				+ String.format("%02d", cal.get(Calendar.MONTH) + 1) + "-"
-				+ String.format("%02d", cal.get(Calendar.DAY_OF_MONTH));
-		return result;
 	}
 
 	/**
