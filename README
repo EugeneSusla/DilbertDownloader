@@ -1,0 +1,9 @@
+A simple Dilbert comic strip downloader utility, that makes it possible to enjoy Dilbert comics offline.
+
+While originally created using java standard libs only, after about a year this project was revisited 
+and tweaked significantly, mainly for self-educational purposes, involving maven, git, log4j, etc.
+
+Usage:
+- Cpecify a folder in config.properties, where the strips should be downloaded (targetFolder entry)
+- Launch the app
+- If interrupted, it will resume from where it stopped the next launch
