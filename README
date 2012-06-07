@@ -4,6 +4,7 @@ While originally created using java standard libs only, after about a year this 
 and tweaked significantly, mainly for self-educational purposes, involving maven, git, log4j, etc.
 
 Usage:
-- Cpecify a folder in config.properties, where the strips should be downloaded (targetFolder entry)
-- Launch the app
+- Cpecify a folder in res/dilbertdownloader/config.properties, where the strips should be downloaded (targetFolder entry)
+- mvn clean package
+- Launch launcher.bat
 - If interrupted, it will resume from where it stopped the next launch
