@@ -19,6 +19,7 @@ public class DilbertDownloader {
 	private static final Logger LOGGER = Logger
 			.getLogger(DilbertDownloader.class.getName());
 
+	//TODO find a way to put config file outside of jar file
 	private static final ResourceBundle CONFIG = ResourceBundle
 			.getBundle("dilbertdownloader.config");
 
