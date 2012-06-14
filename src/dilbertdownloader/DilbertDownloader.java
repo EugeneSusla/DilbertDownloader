@@ -19,7 +19,7 @@ public class DilbertDownloader {
 	private static final Logger LOGGER = Logger
 			.getLogger(DilbertDownloader.class.getName());
 
-	//TODO find a way to put config file outside of jar file
+	// TODO find a way to put config file outside of jar file
 	private static final ResourceBundle CONFIG = ResourceBundle
 			.getBundle("dilbertdownloader.config");
 
@@ -50,12 +50,16 @@ public class DilbertDownloader {
 		Thread thread = new Thread(new Runnable() {
 			public void run() {
 				LOGGER.info("Downloading comics:");
-				Calendar counter = findFirstPresentComic();
+				Calendar counter = findLastAbsentComic();
 				int comicsDownloaded = 0;
 				while (!Thread.interrupted()) {
-					downloadComic(counter, false, true);
-					counter.add(Calendar.DAY_OF_MONTH, -1);
-					comicsDownloaded++;
+					if (!isComicForDateDownloaded(counter)) {
+						downloadComic(counter, false, true);
+						counter.add(Calendar.DAY_OF_MONTH, -1);
+						comicsDownloaded++;
+					} else {
+						counter = findLastAbsentComic(counter);
+					}
 				}
 				LOGGER.info("Finished downloading. Comics downloaded: "
 						+ comicsDownloaded);
@@ -94,12 +98,14 @@ public class DilbertDownloader {
 	}
 
 	private static boolean isComicForDateDownloaded(Calendar date) {
-		String file = targetFolder + dateToFileFormat.format(date.getTime()) + ".gif";
+		String file = targetFolder + dateToFileFormat.format(date.getTime())
+				+ ".gif";
 		LOGGER.debug("Looking for file " + file);
 		return new File(file).exists();
 
 	}
 
+	//TODO: consider removing verbose argument
 	private static boolean downloadComic(Calendar date,
 			boolean checkForAlreadyDownloaded, boolean verbose) {
 		String fileName = targetFolder
@@ -150,12 +156,15 @@ public class DilbertDownloader {
 		downloadLastest(0);
 	}
 
-	private static Calendar findFirstPresentComic() {
-		Calendar counter = Calendar.getInstance();
+	private static Calendar findLastAbsentComic() {
+		return findLastAbsentComic(Calendar.getInstance());
+	}
+
+	private static Calendar findLastAbsentComic(Calendar since) {
+		Calendar counter = since;
 		while (isComicForDateDownloaded(counter)) {
 			counter.add(Calendar.DAY_OF_MONTH, -1);
 		}
-		counter.add(Calendar.DAY_OF_MONTH, 1);
 		return counter;
 	}
 }
