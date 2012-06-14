@@ -23,19 +23,6 @@
 			</resource>
 		</resources>
 		<plugins>
-			<!--  <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<mainClass>dilbertdownloader.DilbertDownloader</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin> -->
-
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
@@ -59,11 +46,8 @@
 					</execution>
 				</executions>
 			</plugin>
-
 		</plugins>
-
 	</build>
-
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
