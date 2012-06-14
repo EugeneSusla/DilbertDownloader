@@ -54,7 +54,7 @@ public class DilbertDownloader {
 				int comicsDownloaded = 0;
 				while (!Thread.interrupted()) {
 					if (!isComicForDateDownloaded(counter)) {
-						downloadComic(counter, false, true);
+						downloadComic(counter, false);
 						counter.add(Calendar.DAY_OF_MONTH, -1);
 						comicsDownloaded++;
 					} else {
@@ -105,9 +105,8 @@ public class DilbertDownloader {
 
 	}
 
-	//TODO: consider removing verbose argument
 	private static boolean downloadComic(Calendar date,
-			boolean checkForAlreadyDownloaded, boolean verbose) {
+			boolean checkForAlreadyDownloaded) {
 		String fileName = targetFolder
 				+ dateToFileFormat.format(date.getTime()) + ".gif";
 		if (checkForAlreadyDownloaded && (new File(fileName)).exists()) {
@@ -123,9 +122,8 @@ public class DilbertDownloader {
 		try {
 			new File(fileName).getParentFile().mkdirs();
 			util.net.Http.writeResponseToFile(url, fileName);
-			if (verbose)
-				LOGGER.info("Comic downloaded for date: "
-						+ dateFormat.format(date.getTime()));
+			LOGGER.info("Comic downloaded for date: "
+					+ dateFormat.format(date.getTime()));
 			return true;
 		} catch (IOException ex) {
 			LOGGER.error(
@@ -146,7 +144,7 @@ public class DilbertDownloader {
 		int count = 0;
 		while (!isComicForDateDownloaded(counter)
 				&& (limit <= 0 || count < limit)) {
-			downloadComic(counter, false, true);
+			downloadComic(counter, false);
 			counter.add(Calendar.DAY_OF_MONTH, -1);
 			count++;
 		}
