@@ -35,6 +35,9 @@ public class DilbertDownloader {
 
 	private static volatile String input = "";
 
+	private DilbertDownloader() {
+	}
+
 	/**
 	 * @param args
 	 *            the command line arguments
